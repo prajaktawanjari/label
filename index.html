@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fingerprint Label Preview</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1 class="title">Fingerprint Label Preview</h1>
+    <div class="controls">
+      <label class="control">
+        <span>Zoom</span>
+        <input id="zoom" type="range" min="0.25" max="3" value="1" step="0.05" />
+        <span id="zoomValue" class="mono">1.00×</span>
+      </label>
+      <button id="renderBtn" type="button">Render</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="panel">
+      <div class="panelHeader">
+        <h2>Label Script</h2>
+        <p class="hint">Parses <span class="mono">!F T S</span>, <span class="mono">!F B</span>, <span class="mono">!F C S</span>. Ignores <span class="mono">!Y</span>, <span class="mono">!C</span>, <span class="mono">!V</span>.</p>
+      </div>
+      <textarea id="input" spellcheck="false"></textarea>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="preview">
+      <div class="previewHeader">
+        <h2>Preview (4×6)</h2>
+        <p class="hint">Coordinate system assumes 4×6 at 406 dpi (1624×2436 dots), origin bottom-left.</p>
+      </div>
+      <div class="canvasWrap">
+        <canvas id="canvas"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "msedge",
+            "request": "launch",
+            "name": "Launch Label Simulator (Edge)",
+            "url": "http://127.0.0.1:8000/label-preview.html",
+            "preLaunchTask": "Start Server",
+            "presentation": { "group": "label" }
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Label Simulator (Chrome)",
+            "url": "http://127.0.0.1:8000/label-preview.html",
+            "preLaunchTask": "Start Server",
+            "presentation": { "group": "label" }
+        }
+    ]
+}
