@@ -487,32 +487,27 @@ function drawBarcode(ctx, el) {
   // cx(el.x) = left edge on canvas (high printer X = left side of label).
   // Barcode extends RIGHTWARD on the physical label = increasing canvas X.
   const cvX   = cx(el.x);                    // left edge of barcode on canvas
-  const maxW  = SCRIPT_W - cvX;              // available space to the right
-  const barW  = Math.min(maxW, (data.length * 11 + 35) * mw);
-  const cvY   = cy(el.y + barH);             // top-left of barcode on canvas
+  const barW  = (data.length * 11 + 35) * mw; // calculate full width needed
+  const cvY   = cy(el.y);                    // bottom of barcode area on canvas
 
   ctx.save();
-  // White background
+  // White background for barcode area
   ctx.fillStyle = '#fff';
-  ctx.fillRect(cvX, cvY, barW, barH);
+  ctx.fillRect(cvX, cvY - barH, barW, barH);
   // Simulated bars
   const bars = generateBars(data, mw, barW);
   ctx.fillStyle = '#000';
   for (const b of bars) {
-    if (b.black) ctx.fillRect(cvX + b.x, cvY + 3, b.w, barH - 6);
+    if (b.black) ctx.fillRect(cvX + b.x, cvY - barH + 3, b.w, barH - 6);
   }
-  // Human-readable text below — character-by-character with monospace tracking
+  // Human-readable text below — centered
   if (data) {
-    const fs = Math.max(12, Math.min(22, mw * 3.5));
+    const fs = Math.max(10, Math.min(18, mw * 3));
     ctx.fillStyle    = '#000';
     ctx.font         = `${fs}px "Courier New", monospace`;
     ctx.textBaseline = 'top';
-    ctx.textAlign    = 'left';
-    let cursorX = cvX;
-    for (const ch of data) {
-      ctx.fillText(ch, cursorX, cvY + barH + 4);
-      cursorX += ctx.measureText(ch).width + 1.5;
-    }
+    ctx.textAlign    = 'center';
+    ctx.fillText(data, cvX + barW / 2, cvY + 2);
   }
   ctx.restore();
 }
@@ -590,10 +585,12 @@ function drawBBoxes(ctx, elements) {
     } else if (el.kind === 'barcode') {
       const mw = Math.max(1, el.moduleW);
       const barH = Math.max(20, el.height);
+      const barW = (el.value.length * 11 + 35) * mw;
+      const textH = el.value ? Math.max(10, Math.min(18, mw * 3)) + 4 : 0;
       bx = cx(el.x);
-      bw = Math.min(SCRIPT_W - bx, (el.value.length * 11 + 35) * mw);
-      bh = barH + (el.value ? Math.max(12, Math.min(22, mw * 3.5)) + 4 : 0);
-      by = cy(el.y + barH);
+      by = cy(el.y) - barH;
+      bw = barW;
+      bh = barH + textH;
     } else if (el.kind === 'box') {
       bx = cx(el.x);
       by = cy(el.y + el.height);
