@@ -251,9 +251,9 @@ const CS         = PRINT_DPI / SCRIPT_DPI;   // 0.5
 // SCRIPT_W must cover all X values in the script (max observed: 1675 for box corner ticks).
 // X increases from RIGHT→LEFT in Fingerprint: X=0 is right edge, X≈1675 is left edge.
 const SCRIPT_W   = 1724;                     // script-dot width  (1675 + 49 margin)
-const SCRIPT_H   = 10 * SCRIPT_DPI;         // 4060 script-dot height (10" × 406 dpi) - increased for full visibility
+const SCRIPT_H   = 12 * SCRIPT_DPI;         // 4872 script-dot height (12" × 406 dpi) - increased for full visibility
 const CW         = Math.round(SCRIPT_W * CS); // 862 physical px wide
-const CH         = Math.round(SCRIPT_H * CS); // 2030 physical px tall
+const CH         = Math.round(SCRIPT_H * CS); // 2436 physical px tall
 
 /* Font base heights in dots, calibrated to:
      font1=12  font2=18  font3=28  font4=40  font8=120
@@ -262,7 +262,7 @@ const FONT_BASE = { 1:12, 2:18, 3:28, 4:40, 5:52, 6:68, 7:88, 8:90 };
 
 const GRID_STEP = 50;   // grid line every N dots
 const LEFT_OFFSET = 650; // align content to the left edge
-const DOWN_OFFSET = 0;   // no vertical shift
+const DOWN_OFFSET = -200; // move content upward
 
 // Y-flip: printer Y (bottom-left origin) → canvas Y (top-left)
 function cy(printerY) { return SCRIPT_H - printerY + DOWN_OFFSET; }
