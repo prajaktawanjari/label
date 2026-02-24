@@ -333,10 +333,17 @@ function parseFingerprint(text) {
       cmdCount++; continue;
     }
 
-    // ── !F B S  printerY  printerX  L  height  width  thickness (box/rectangle)
+    // ── !F B S  printerY  printerX  L  height  width  thickness (box/rectangle with thickness)
     m = line.match(/^!F\s+B\s+S\s+(-?\d+)\s+(-?\d+)\s+[A-Z]\s+(\d+)\s+(\d+)\s+(\d+)\s*$/);
     if (m) {
       elements.push({ kind:'box', y:+m[1], x:+m[2], width:+m[4], height:+m[3], thickness:+m[5], lno:i+1 });
+      cmdCount++; continue;
+    }
+
+    // ── !F B S  printerY  printerX  L  height  width (box/rectangle without thickness)
+    m = line.match(/^!F\s+B\s+S\s+(-?\d+)\s+(-?\d+)\s+[A-Z]\s+(\d+)\s+(\d+)\s*$/);
+    if (m) {
+      elements.push({ kind:'box', y:+m[1], x:+m[2], width:+m[4], height:+m[3], thickness:2, lno:i+1 });
       cmdCount++; continue;
     }
 
