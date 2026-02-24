@@ -261,13 +261,14 @@ const CH         = Math.round(SCRIPT_H * CS); // 1218 physical px tall
 const FONT_BASE = { 1:12, 2:18, 3:28, 4:40, 5:52, 6:68, 7:88, 8:90 };
 
 const GRID_STEP = 50;   // grid line every N dots
+const LEFT_OFFSET = 150; // shift content to the left
 
 // Y-flip: printer Y (bottom-left origin) → canvas Y (top-left)
 function cy(printerY) { return SCRIPT_H - printerY; }
 
 // X-flip: printer X increases RIGHT→LEFT; canvas X increases LEFT→RIGHT.
 // High printer X = left side of label; low printer X = right side.
-function cx(printerX) { return SCRIPT_W - printerX; }
+function cx(printerX) { return SCRIPT_W - printerX - LEFT_OFFSET; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BAR PATTERN GENERATOR
