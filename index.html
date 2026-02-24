@@ -318,16 +318,25 @@ function parseFingerprint(text) {
       continue;
     }
 
-    // ── !F T S  printerY  printerX  orient  fontId  xMul  yMul  "text"
+    // ── !F T S  printerY  printerX  orient  fontId  xMul  yMul  "text" (standard)
     let m = line.match(/^!F\s+T\s+S\s+(-?\d+)\s+(-?\d+)\s+[A-Z]\s+(\d+)\s+(\d+)\s+(\d+)\s+"([^"]*)"\s*$/);
     if (m) { elements.push({ kind:'text',    y:+m[1], x:+m[2], fontId:+m[3], xMul:+m[4], yMul:+m[5], value:m[6],  lno:i+1 }); cmdCount++; continue; }
 
-    // ── !F B  dir  printerY  printerX  L  thickness  length
-    m = line.match(/^!F\s+B\s+([A-Z])\s+(-?\d+)\s+(-?\d+)\s+[A-Z]\s+(\d+)\s+(\d+)\s*$/);
+    // ── !F T S  printerY  printerX  C  fontId  extra1  extra2  rotation  "text" (rotated text with C)
+    m = line.match(/^!F\s+T\s+S\s+(-?\d+)\s+(-?\d+)\s+C\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+"([^"]*)"\s*$/);
+    if (m) { elements.push({ kind:'text',    y:+m[1], x:+m[2], fontId:+m[3], xMul:2, yMul:3, value:m[7], rotation:+m[6], lno:i+1 }); cmdCount++; continue; }
+
+    // ── !F B N/E  printerY  printerX  L  thickness  length (line)
+    m = line.match(/^!F\s+B\s+([NE])\s+(-?\d+)\s+(-?\d+)\s+[A-Z]\s+(\d+)\s+(\d+)\s*$/);
     if (m) {
-      const dir = m[1];
-      if (dir !== 'N' && dir !== 'E') { warnings.push({ lno: i+1, msg: `Unsupported !F B dir '${dir}'` }); continue; }
-      elements.push({ kind:'line', dir, y:+m[2], x:+m[3], thickness:+m[4], length:+m[5], lno:i+1 });
+      elements.push({ kind:'line', dir:m[1], y:+m[2], x:+m[3], thickness:+m[4], length:+m[5], lno:i+1 });
+      cmdCount++; continue;
+    }
+
+    // ── !F B S  printerY  printerX  L  width  height  thickness (box/rectangle)
+    m = line.match(/^!F\s+B\s+S\s+(-?\d+)\s+(-?\d+)\s+[A-Z]\s+(\d+)\s+(\d+)\s+(\d+)\s*$/);
+    if (m) {
+      elements.push({ kind:'box', y:+m[1], x:+m[2], width:+m[3], height:+m[4], thickness:+m[5], lno:i+1 });
       cmdCount++; continue;
     }
 
@@ -509,6 +518,21 @@ function drawBarcode(ctx, el) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   DRAW:  BOX / RECTANGLE
+   (el.x, el.y) = bottom-left corner of the box in printer coordinates.
+   Box extends RIGHTWARD by width and UPWARD by height.
+═══════════════════════════════════════════════════════════════════════════ */
+function drawBox(ctx, el) {
+  const cvX = cx(el.x);                  // left edge on canvas
+  const cvY = cy(el.y + el.height);      // top edge on canvas
+  ctx.save();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth   = Math.max(1, el.thickness);
+  ctx.strokeRect(cvX, cvY, el.width, el.height);
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    DRAW:  GRID OVERLAY  (every GRID_STEP dots)
 ═══════════════════════════════════════════════════════════════════════════ */
 function drawGrid(ctx) {
@@ -541,7 +565,7 @@ function drawGrid(ctx) {
    Green = text   Orange = line   Red = barcode
 ═══════════════════════════════════════════════════════════════════════════ */
 function drawBBoxes(ctx, elements) {
-  const clr = { text:'rgba(63,185,80,.7)', line:'rgba(255,160,30,.7)', barcode:'rgba(248,81,73,.7)' };
+  const clr = { text:'rgba(63,185,80,.7)', line:'rgba(255,160,30,.7)', barcode:'rgba(248,81,73,.7)', box:'rgba(138,75,175,.7)' };
   ctx.save();
   ctx.setLineDash([3, 3]);
   ctx.lineWidth = 1;
@@ -570,6 +594,11 @@ function drawBBoxes(ctx, elements) {
       bw = Math.min(SCRIPT_W - bx, (el.value.length * 11 + 35) * mw);
       bh = barH + (el.value ? Math.max(12, Math.min(22, mw * 3.5)) + 4 : 0);
       by = cy(el.y + barH);
+    } else if (el.kind === 'box') {
+      bx = cx(el.x);
+      by = cy(el.y + el.height);
+      bw = el.width;
+      bh = el.height;
     } else continue;
 
     ctx.strokeStyle = col;
@@ -610,8 +639,9 @@ function renderLabel(elements, { zoom = 0.36, showGrid = false, showBBox = false
   // ── Grid (drawn first, under everything) ───────────────────────────────────
   if (showGrid) drawGrid(ctx);
 
-  // ── Content: lines → barcodes → text ──────────────────────────────────────
+  // ── Content: lines → boxes → barcodes → text ──────────────────────────────────────
   drawLines(ctx, elements.filter(el => el.kind === 'line'));
+  for (const el of elements) if (el.kind === 'box')     drawBox(ctx, el);
   for (const el of elements) if (el.kind === 'barcode') drawBarcode(ctx, el);
   for (const el of elements) if (el.kind === 'text')    drawText(ctx, el);
 
@@ -644,10 +674,10 @@ function doRender() {
   const ms = (performance.now() - t0).toFixed(1);
 
   // Parse log
-  const n = { text: 0, line: 0, barcode: 0 };
+  const n = { text: 0, line: 0, barcode: 0, box: 0 };
   for (const el of elements) n[el.kind] = (n[el.kind] || 0) + 1;
   const rows = [
-    `<span class="ok">✔ ${cmdCount} command(s) · text:${n.text} · lines:${n.line} · barcodes:${n.barcode} · ${ms}ms</span>`,
+    `<span class="ok">✔ ${cmdCount} command(s) · text:${n.text} · lines:${n.line} · boxes:${n.box} · barcodes:${n.barcode} · ${ms}ms</span>`,
     ...warnings.map(w => `<span class="warn">⚠ L${w.lno}: ${esc(w.msg)}</span>`),
   ];
   document.getElementById('parseLog').innerHTML = rows.join('<br>');
