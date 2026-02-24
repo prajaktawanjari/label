@@ -464,18 +464,17 @@ function drawLines(ctx, lineEls) {
 ═══════════════════════════════════════════════════════════════════════════ */
 function drawText(ctx, el) {
   if (!el.value) return;
-  // Base font size only — do NOT multiply by xMul or yMul.
+  const SCALE = 0.5;
   const BASE = { 1:12, 2:18, 3:28, 4:40, 5:52, 6:68, 7:88, 8:48 };
-  const sizePx     = BASE[el.fontId] || 18;
+  const sizePx = BASE[el.fontId] || 18;
   const widthScale = el.xMul || 1;
   const heightScale = el.yMul || 1;
   ctx.save();
-  ctx.fillStyle    = '#000';
-  ctx.textBaseline = 'alphabetic';
-  ctx.textAlign    = 'left';
-  // Translate to position, then scale for width/height stretch independently.
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
   ctx.translate(cx(el.x), cy(el.y));
-  ctx.scale(widthScale, heightScale);
+  ctx.scale(widthScale * SCALE, heightScale * SCALE);
   ctx.font = `${sizePx}px "Courier New", monospace`;
   ctx.fillText(el.value, 0, 0);
   ctx.restore();
@@ -507,14 +506,20 @@ function drawBarcode(ctx, el) {
   for (const b of bars) {
     if (b.black) ctx.fillRect(cvX + b.x, cvY - barH + 3, b.w, barH - 6);
   }
-  // Human-readable text below — centered
+  // Human-readable text below — character-by-character with fixed tracking
   if (data) {
+    const SCALE = 0.5;
     const fs = Math.max(10, Math.min(18, mw * 3));
-    ctx.fillStyle    = '#000';
-    ctx.font         = `${fs}px "Courier New", monospace`;
+    ctx.fillStyle = '#000';
+    ctx.font = `${fs}px "Courier New", monospace`;
     ctx.textBaseline = 'top';
-    ctx.textAlign    = 'center';
-    ctx.fillText(data, cvX + barW / 2, cvY + 2);
+    ctx.textAlign = 'left';
+    let cursorX = cvX;
+    const charWidth = fs * 0.6 * SCALE;
+    for (const ch of data) {
+      ctx.fillText(ch, cursorX, cvY + 2);
+      cursorX += charWidth;
+    }
   }
   ctx.restore();
 }
