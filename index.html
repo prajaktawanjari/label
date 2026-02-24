@@ -372,7 +372,10 @@ function drawLines(ctx, lineEls) {
   for (const el of lineEls.filter(e => e.length > 100)) {
     // Skip long vertical guide lines only (dir E, thin, long) — never skip horizontal (N) lines.
     const isVertical = el.dir === 'E';
+    const isVerticalN = el.dir === 'N';
     if (isVertical && el.thickness <= 5 && el.length > 500) continue;
+    // Skip the vertical separator line below barcode (N direction, long line in barcode area)
+    if (isVerticalN && el.length > 500 && el.y < 800) continue;
     ctx.save();
     ctx.strokeStyle = '#000';
     ctx.lineWidth   = Math.max(1, el.thickness);
